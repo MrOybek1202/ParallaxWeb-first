@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AirPods Max – Parallax</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600;700;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background: #000;
+            color: #fff;
+        }
+
+        .parallax-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .airpods-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 320px;
+            transform: translate(-50%, -50%);
+            will-change: transform;
+            transition: transform 0.7s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.5s ease;
+        }
+
+        .airpods-image img {
+            width: 100%;
+            height: auto;
+        }
+
+        .airpods-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%);
+            transform: translate(-50%, -50%);
+            filter: blur(60px);
+            opacity: 0;
+            transition: opacity 0.6s;
+        }
+
+        .content-section {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .text-reveal {
+            opacity: 0;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .text-reveal-left {
+            transform: translateX(-80px);
+        }
+
+        .text-reveal-right {
+            transform: translateX(80px);
+        }
+
+        .text-reveal-top {
+            transform: translateY(-80px);
+        }
+
+        .text-reveal-bottom {
+            transform: translateY(80px);
+        }
+
+        .text-reveal.visible {
+            opacity: 1;
+            transform: translate(0, 0) !important;
+        }
+
+        .text-reveal.hidden {
+            opacity: 0;
+            transform: translate(0, 0);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .image-reveal {
+            opacity: 0;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .image-reveal-left {
+            transform: translateX(-80px);
+        }
+
+        .image-reveal-right {
+            transform: translateX(80px);
+        }
+
+        .image-reveal.visible {
+            opacity: 1;
+            transform: translate(0, 0) !important;
+        }
+
+        .image-reveal.hidden {
+            opacity: 0;
+            transform: translate(0, 0);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero-text {
+            font-size: clamp(3rem, 10vw, 8rem);
+            font-weight: 900;
+            line-height: 0.9;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #fff 0%, #60a5fa 50%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .float-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent);
+            filter: blur(40px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(50px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-50px, 50px) scale(0.9);
+            }
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(10px);
+            }
+        }
+
+        .placeholder {
+            width: 320px;
+            height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Анимация для появления элементов с разных сторон */
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- PARALLAX CONTAINER -->
+    <div class="parallax-container">
+        <div class="airpods-glow" id="glow"></div>
+        <div class="airpods-image w-[600px] h-[600px] z-50" id="airpods">
+            <img src="./images/image1.png" alt="AirPods Max" />
+        </div>
+    </div>
+
+    <!-- FLOATING BACKGROUND ELEMENTS -->
+    <div class="floating-elements">
+        <div class="float-circle" style="width: 300px; height: 300px; top: 10%; left: 10%; animation-delay: 0s;"></div>
+        <div class="float-circle" style="width: 200px; height: 200px; top: 60%; right: 15%; animation-delay: 5s;"></div>
+        <div class="float-circle" style="width: 250px; height: 250px; bottom: 20%; left: 50%; animation-delay: 10s;">
+        </div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section class="content-section" style="height: 100vh;" id="hero-section">
+        <div class="text-center px-6">
+            <div class="text-reveal text-reveal-top visible" id="hero-title">
+                <h1 class="hero-text mb-6">AirPods<br />Max</h1>
+                <p class="text-xl md:text-2xl text-gray-400 font-light reveal-delay-1">Spatial Audio. Now playing.</p>
+            </div>
+            <div class="scroll-indicator">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M19 12l-7 7-7-7" />
+                </svg>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 1 -->
+    <section class="content-section" id="section1">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div class="text-reveal text-reveal-left hidden" id="text-section1">
+                <h2 class="text-5xl font-light mb-6 reveal-delay-1">
+                    Hear every <span
+                        style="background: linear-gradient(135deg, #60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">dimension</span>
+                </h2>
+                <p class="text-lg text-gray-300 leading-relaxed reveal-delay-2">
+                    Experience immersive sound that moves around you with
+                    industry-leading spatial audio technology.
+                </p>
+            </div>
+            <div class="flex justify-center">
+                <div class="placeholder">
+                    <img class="w-[270px] image-reveal image-reveal-right hidden" id="image-section1"
+                        src="./images/foto3.png" alt="">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section class="content-section" id="section2" style="background: linear-gradient(180deg, #000 0%, #0a1628 100%);">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div class="flex justify-center ">
+                <div class="placeholder">
+                    <img class="w-[400px] absolute left-0 top-20 image-reveal image-reveal-left hidden"
+                        id="image-section2" src="./images/foto2.png" alt="">
+                </div>
+            </div>
+            <div class="text-reveal text-reveal-right  hidden" id="text-section2">
+                <h2 class="text-5xl font-light mb-6 reveal-delay-1">
+                    Adaptive <span
+                        style="background: linear-gradient(135deg, #60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Audio</span>
+                </h2>
+                <p class="text-lg text-gray-300 leading-relaxed reveal-delay-2">
+                    Automatically adapts to your environment for the best listening
+                    experience wherever you are.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-20 text-center text-gray-600 border-t border-white/10">
+        <p class="text-sm">Designed for demonstration purposes.</p>
+    </footer>
+
+    <script>
+        const airpods = document.getElementById('airpods')
+        const glow = document.getElementById('glow')
+
+        // Hero elements
+        const heroTitle = document.getElementById('hero-title')
+        const heroSection = document.getElementById('hero-section')
+
+        // Section 1 elements
+        const section1 = document.getElementById('section1')
+        const text1 = document.getElementById('text-section1')
+        const img1 = document.getElementById('image-section1')
+
+        // Section 2 elements
+        const section2 = document.getElementById('section2')
+        const text2 = document.getElementById('text-section2')
+        const img2 = document.getElementById('image-section2')
+
+        const lerp = (a, b, t) => a + (b - a) * t
+        const clamp = (v) => Math.min(1, Math.max(0, v))
+
+        // Возвращает центр placeholder относительно окна
+        function center(el) {
+            const r = el.getBoundingClientRect()
+            const w = airpods.offsetWidth / 2
+            const h = airpods.offsetHeight / 2
+            return {
+                x: r.left + r.width / 2 - w,
+                y: r.top + r.height / 2 - h
+            }
+        }
+
+        // Показываем/скрываем элементы с анимацией
+        function toggleVisibility(element, isVisible) {
+            if (!element) return
+
+            if (isVisible) {
+                element.classList.remove('hidden')
+                // Добавляем visible с небольшой задержкой для плавности
+                setTimeout(() => {
+                    element.classList.add('visible')
+                }, 50)
+            } else {
+                element.classList.remove('visible')
+                element.classList.add('hidden')
+            }
+        }
+
+        // Проверяем, виден ли элемент на экране
+        function isElementVisible(el, offset = 0.8) {
+            const rect = el.getBoundingClientRect()
+            const vh = window.innerHeight
+            // Элемент виден, когда его верхняя граница выше 80% окна И нижняя граница ниже 20% окна
+            return rect.top < vh * offset && rect.bottom > vh * (1 - offset)
+        }
+
+        // Проверяем видимость элементов
+        function checkVisibility() {
+            const vh = window.innerHeight
+
+            // Hero section
+            const heroRect = heroSection.getBoundingClientRect()
+            const isHeroVisible = heroRect.top < vh * 0.9 && heroRect.bottom > vh * 0.1
+            toggleVisibility(heroTitle, isHeroVisible)
+
+            // Section 1
+            const section1Rect = section1.getBoundingClientRect()
+            const isSection1Visible = section1Rect.top < vh * 0.8 && section1Rect.bottom > vh * 0.2
+            toggleVisibility(text1, isSection1Visible)
+            toggleVisibility(img1, isSection1Visible)
+
+            // Section 2
+            const section2Rect = section2.getBoundingClientRect()
+            const isSection2Visible = section2Rect.top < vh * 0.8 && section2Rect.bottom > vh * 0.2
+            toggleVisibility(text2, isSection2Visible)
+            toggleVisibility(img2, isSection2Visible)
+        }
+
+        function scrollAnim() {
+            const vh = window.innerHeight
+            const p1Top = section1.getBoundingClientRect().top
+            const p2Top = section2.getBoundingClientRect().top
+
+            /* HERO SECTION */
+            if (p1Top > vh * 0.5) {
+                const t = clamp(1 - p1Top / vh)
+                airpods.style.transform =
+                    `translate(-50%, -50%) translateY(${t * 170}%) scale(${1.15 - t * 0.6}) rotate(${t * 45}deg)`
+                glow.style.opacity = 0.3
+                return
+            }
+
+            /* SECTION 1 - фиксированная позиция */
+            if (p2Top > vh * 0.5) {
+                const placeholderDiv = section1.querySelector('.placeholder')
+                const c = center(placeholderDiv)
+                airpods.style.transform =
+                    `translate(${c.x}px, ${c.y}px) scale(0.55) rotate(-45deg)`
+                glow.style.opacity = 0.5
+                return
+            }
+
+            /* TRANSITION TO SECTION 2 */
+            const placeholder1 = section1.querySelector('.placeholder')
+            const placeholder2 = section2.querySelector('.placeholder')
+            const t = clamp(1 - p2Top / vh)
+            const a = center(placeholder1)
+            const b = center(placeholder2)
+
+            airpods.style.transform =
+                `translate(${lerp(a.x, b.x, t)}px, ${lerp(a.y, b.y, t)}px) scale(0.55) rotate(${lerp(-45, 45, t)}deg)`
+            glow.style.opacity = 0.3 + t * 0.3
+        }
+
+        let ticking = false
+        function onScroll() {
+            if (!ticking) {
+                window.requestAnimationFrame(function () {
+                    scrollAnim()
+                    checkVisibility()
+                    ticking = false
+                })
+                ticking = true
+            }
+        }
+
+        // Обработчики событий
+        window.addEventListener('scroll', onScroll, { passive: true })
+        window.addEventListener('resize', () => {
+            scrollAnim()
+            checkVisibility()
+        })
+
+        // Инициализация
+        window.addEventListener('load', () => {
+            scrollAnim()
+            checkVisibility()
+
+            // Показываем hero с анимацией при загрузке
+            setTimeout(() => {
+                heroTitle.classList.add('visible')
+            }, 300)
+        })
+    </script>
+
+</body>
+
+</html>

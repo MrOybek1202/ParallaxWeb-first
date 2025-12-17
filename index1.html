@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Apple Style Video Experience</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+			background: #000;
+			color: #fff;
+			overflow-x: hidden;
+			-webkit-font-smoothing: antialiased;
+			-moz-osx-font-smoothing: grayscale;
+		}
+
+		/* Фоновое видео */
+		.video-background {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100vh;
+			z-index: -1;
+		}
+
+		#frameImage {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			will-change: transform;
+			transition: opacity 0.3s ease;
+			opacity: 0;
+		}
+
+		#frameImage.loaded {
+			opacity: 1;
+		}
+
+		/* Полупрозрачный оверлей для лучшей читаемости текста */
+		.overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100vh;
+			background: linear-gradient(to bottom,
+					rgba(0, 0, 0, 0.4) 0%,
+					rgba(0, 0, 0, 0.3) 20%,
+					rgba(0, 0, 0, 0.2) 50%,
+					rgba(0, 0, 0, 0.3) 80%,
+					rgba(0, 0, 0, 0.4) 100%);
+			z-index: -1;
+			pointer-events: none;
+		}
+
+		/* Навигация в стиле Apple */
+		.apple-nav {
+			position: fixed;
+			top: 0;
+			width: 100%;
+			padding: 22px 40px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			z-index: 100;
+			background: rgba(0, 0, 0, 0.6);
+			backdrop-filter: blur(20px);
+			-webkit-backdrop-filter: blur(20px);
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		}
+
+		.apple-nav.scrolled {
+			padding: 15px 40px;
+			background: rgba(0, 0, 0, 0.85);
+		}
+
+		.logo {
+			font-size: 21px;
+			font-weight: 600;
+			letter-spacing: -0.5px;
+			color: #ffffff;
+			text-decoration: none;
+			opacity: 0.95;
+		}
+
+		.nav-links {
+			display: flex;
+			gap: 48px;
+		}
+
+		.nav-links a {
+			color: #ffffff;
+			text-decoration: none;
+			font-size: 14px;
+			font-weight: 400;
+			letter-spacing: -0.2px;
+			opacity: 0.8;
+			transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+			position: relative;
+			padding: 5px 0;
+		}
+
+		.nav-links a:hover {
+			opacity: 1;
+			transform: translateY(-1px);
+		}
+
+		.nav-links a::after {
+			content: '';
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			width: 0;
+			height: 1px;
+			background: #ffffff;
+			transition: width 0.3s ease;
+		}
+
+		.nav-links a:hover::after {
+			width: 100%;
+		}
+
+		/* Контентные секции */
+		.content {
+			position: relative;
+			padding-top: 120px;
+			min-height: 500vh;
+		}
+
+		.section {
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			padding: 0 20px;
+			text-align: center;
+			opacity: 0;
+			transform: translateY(30px);
+			transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+			will-change: transform, opacity;
+		}
+
+		.section.visible {
+			opacity: 1;
+			transform: translateY(0);
+		}
+
+		.section h1 {
+			font-size: 56px;
+			font-weight: 700;
+			line-height: 1.1;
+			margin-bottom: 20px;
+			color: #ffffff;
+			letter-spacing: -1px;
+			max-width: 800px;
+			text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
+		}
+
+		.section p {
+			font-size: 21px;
+			font-weight: 400;
+			line-height: 1.4;
+			color: rgba(255, 255, 255, 0.9);
+			max-width: 640px;
+			margin-bottom: 30px;
+			text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+		}
+
+		.section-number {
+			font-size: 14px;
+			font-weight: 600;
+			color: rgba(255, 255, 255, 0.6);
+			letter-spacing: 2px;
+			margin-bottom: 30px;
+			text-transform: uppercase;
+		}
+
+		/* Прогресс-бар Apple стиль */
+		.progress-container {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 1px;
+			z-index: 101;
+			background: rgba(255, 255, 255, 0.1);
+		}
+
+		.progress-fill {
+			height: 100%;
+			width: 0;
+			background: linear-gradient(90deg,
+					rgba(255, 255, 255, 0.9),
+					rgba(255, 255, 255, 0.7));
+			transition: width 0.1s linear;
+		}
+
+		/* Футер в стиле Apple */
+		.footer {
+			position: fixed;
+			bottom: 0;
+			width: 100%;
+			padding: 30px 40px;
+			z-index: 100;
+			background: linear-gradient(to top,
+					rgba(0, 0, 0, 0.9),
+					rgba(0, 0, 0, 0.7),
+					transparent);
+			text-align: center;
+			opacity: 0;
+			transition: opacity 0.5s ease;
+		}
+
+		.footer.visible {
+			opacity: 1;
+		}
+
+		.footer-text {
+			font-size: 13px;
+			color: rgba(255, 255, 255, 0.6);
+			letter-spacing: 0.5px;
+		}
+
+		/* Индикатор скролла */
+		.scroll-indicator {
+			position: fixed;
+			bottom: 60px;
+			left: 50%;
+			transform: translateX(-50%);
+			z-index: 100;
+			opacity: 0.7;
+			transition: all 0.3s ease;
+			animation: bounce 2s infinite;
+		}
+
+		.scroll-indicator.hidden {
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		.scroll-indicator svg {
+			fill: none;
+			stroke: #ffffff;
+			stroke-width: 1.5;
+		}
+
+		@keyframes bounce {
+
+			0%,
+			20%,
+			50%,
+			80%,
+			100% {
+				transform: translateX(-50%) translateY(0);
+			}
+
+			40% {
+				transform: translateX(-50%) translateY(-10px);
+			}
+
+			60% {
+				transform: translateX(-50%) translateY(-5px);
+			}
+		}
+
+		/* Адаптивность */
+		@media (max-width: 768px) {
+			.apple-nav {
+				padding: 18px 20px;
+			}
+
+			.nav-links {
+				display: none;
+			}
+
+			.section h1 {
+				font-size: 40px;
+				padding: 0 20px;
+			}
+
+			.section p {
+				font-size: 18px;
+				padding: 0 20px;
+			}
+
+			.content {
+				min-height: 400vh;
+			}
+		}
+
+		@media (max-width: 480px) {
+			.section h1 {
+				font-size: 32px;
+			}
+
+			.section p {
+				font-size: 16px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<!-- Навигация Apple -->
+	<nav class="apple-nav" id="appleNav">
+		<a href="#" class="logo">ScrollFlow</a>
+		<div class="nav-links">
+			<a href="#start">Начало</a>
+			<a href="#middle">Середина</a>
+			<a href="#end">Конец</a>
+			<a href="#about">О проекте</a>
+		</div>
+	</nav>
+
+	<!-- Прогресс-бар -->
+	<div class="progress-container">
+		<div class="progress-fill" id="progressFill"></div>
+	</div>
+
+	<!-- Фоновое видео -->
+	<div class="video-background">
+		<img id="frameImage" alt="Video frame" />
+		<div class="overlay"></div>
+	</div>
+
+	<!-- Индикатор скролла -->
+	<div class="scroll-indicator" id="scrollIndicator">
+		<svg width="24" height="24" viewBox="0 0 24 24">
+			<path d="M12 5v14M5 12l7 7 7-7" />
+		</svg>
+	</div>
+
+	<!-- Контент -->
+	<div class="content" id="content">
+		<div class="section" id="start">
+			<div class="section-number">01</div>
+			<h1>Новая эра цифрового повествования</h1>
+			<p>Погрузитесь в уникальный опыт скроллинга, где каждый пиксель рассказывает свою историю. Плавные переходы и
+				кинематографичные кадры создают ощущение живого видео.</p>
+		</div>
+
+		<div class="section" id="middle">
+			<div class="section-number">02</div>
+			<h1>Технология следующего поколения</h1>
+			<p>96 кадров анимации, синхронизированных с вашим скроллом. Никаких прерываний, только плавное движение от
+				начала до конца.</p>
+		</div>
+
+		<div class="section">
+			<div class="section-number">03</div>
+			<h1>Динамическая композиция</h1>
+			<p>Каждый элемент интерфейса реагирует на ваши движения. Навигация, текст и фон работают в идеальной
+				гармонии.</p>
+		</div>
+
+		<div class="section">
+			<div class="section-number">04</div>
+			<h1>Идеальная синхронизация</h1>
+			<p>Скорость, плавность и точность. Все кадры загружены заранее для мгновенного отклика и безупречного
+				воспроизведения.</p>
+		</div>
+
+		<div class="section" id="end">
+			<div class="section-number">05</div>
+			<h1>Завершение путешествия</h1>
+			<p>Это не просто скроллинг — это цифровое искусство. Эксперимент на стыке технологий и дизайна, создающий
+				незабываемые впечатления.</p>
+		</div>
+	</div>
+
+	<!-- Футер -->
+	<footer class="footer" id="footer">
+		<p class="footer-text">© 2024 Apple Style Experience. Все права защищены.</p>
+	</footer>
+
+	<script>
+		// === КОНФИГУРАЦИЯ ===
+		const TOTAL_FRAMES = 96
+		const SCROLL_SPEED = 0.85
+		const imageFiles = []
+
+		// Генерация путей к изображениям
+		for (let i = 0; i < TOTAL_FRAMES; i++) {
+			imageFiles.push(`photos/frame_${String(i).padStart(2, '0')}_delay-0.08s.png`)
+		}
+
+		// === ЭЛЕМЕНТЫ DOM ===
+		const frameImg = document.getElementById('frameImage')
+		const progressFill = document.getElementById('progressFill')
+		const appleNav = document.getElementById('appleNav')
+		const scrollIndicator = document.getElementById('scrollIndicator')
+		const footer = document.getElementById('footer')
+		const sections = document.querySelectorAll('.section')
+
+		// === ПРЕДЗАГРУЗКА ===
+		function preloadImages() {
+			const loadBatch = (start, end) => {
+				for (let i = start; i < end && i < imageFiles.length; i++) {
+					const img = new Image()
+					img.src = imageFiles[i]
+					img.onload = () => {
+						if (i === 0) {
+							frameImg.classList.add('loaded')
+						}
+					}
+				}
+			}
+
+			// Первые 10 кадров сразу
+			loadBatch(0, 10)
+
+			// Остальные с задержкой
+			setTimeout(() => loadBatch(10, 30), 500)
+			setTimeout(() => loadBatch(30, TOTAL_FRAMES), 1000)
+		}
+
+		// === ОБРАБОТЧИК СКРОЛЛА ===
+		let lastFrame = -1
+		let rafId = null
+
+		function handleScroll() {
+			const scrollTop = window.scrollY
+			const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+			const scrollProgress = maxScroll > 0 ? scrollTop / maxScroll : 0
+
+			// Прогресс-бар
+			progressFill.style.width = `${scrollProgress * 100}%`
+
+			// Навигация
+			appleNav.classList.toggle('scrolled', scrollTop > 50)
+
+			// Индикатор скролла
+			scrollIndicator.classList.toggle('hidden', scrollProgress > 0.9)
+
+			// Футер
+			footer.classList.toggle('visible', scrollProgress > 0.8)
+
+			// Анимация секций
+			sections.forEach(section => {
+				const rect = section.getBoundingClientRect()
+				const isVisible = rect.top < window.innerHeight * 0.75
+				section.classList.toggle('visible', isVisible)
+			})
+
+			// Смена кадров (оптимизировано через requestAnimationFrame)
+			if (rafId === null) {
+				rafId = requestAnimationFrame(() => {
+					const frameIndex = Math.min(
+						TOTAL_FRAMES - 1,
+						Math.floor(scrollProgress * TOTAL_FRAMES * SCROLL_SPEED)
+					)
+
+					if (frameIndex !== lastFrame) {
+						frameImg.src = imageFiles[frameIndex]
+						lastFrame = frameIndex
+					}
+					rafId = null
+				})
+			}
+		}
+
+		// === ПЛАВНЫЙ СКРОЛЛ ===
+		function smoothScrollTo(target) {
+			if (typeof target === 'string') {
+				const element = document.querySelector(target)
+				if (element) {
+					element.scrollIntoView({
+						behavior: 'smooth',
+						block: 'center'
+					})
+				}
+			}
+		}
+
+		// === ИНИЦИАЛИЗАЦИЯ ===
+		window.addEventListener('load', () => {
+			// Первый кадр
+			frameImg.src = imageFiles[0]
+			frameImg.onload = () => {
+				frameImg.classList.add('loaded')
+			}
+
+			// Предзагрузка
+			preloadImages()
+
+			// Обработчики
+			window.addEventListener('scroll', handleScroll, { passive: true })
+			window.addEventListener('resize', handleScroll)
+
+			// Навигация
+			document.querySelectorAll('.nav-links a').forEach(link => {
+				link.addEventListener('click', (e) => {
+					e.preventDefault()
+					const href = link.getAttribute('href')
+					if (href.startsWith('#')) {
+						smoothScrollTo(href)
+					}
+				})
+			})
+
+			// Логотип
+			document.querySelector('.logo').addEventListener('click', (e) => {
+				e.preventDefault()
+				smoothScrollTo('#start')
+			})
+
+			// Первый вызов
+			handleScroll()
+		})
+
+		// === ДЕБАУНС ДЛЯ ПРОИЗВОДИТЕЛЬНОСТИ ===
+		function debounce(func, wait) {
+			let timeout
+			return function executedFunction(...args) {
+				const later = () => {
+					clearTimeout(timeout)
+					func(...args)
+				}
+				clearTimeout(timeout)
+				timeout = setTimeout(later, wait)
+			}
+		}
+
+		// Оптимизированный скролл
+		const optimizedScroll = debounce(handleScroll, 10)
+		window.addEventListener('scroll', optimizedScroll, { passive: true })
+	</script>
+</body>
+
+</html>
